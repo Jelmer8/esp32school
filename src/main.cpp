@@ -1,6 +1,7 @@
 #include <cstring>
 #include <HardwareSerial.h>
 #include "networking.h"
+#include "doorfeature.h"
 
 void setup() {
     Serial.begin(115200);
@@ -9,5 +10,6 @@ void setup() {
 }
 
 void loop() {
-
+    networkingLoop();
+    doorFeatureLoop();
 }

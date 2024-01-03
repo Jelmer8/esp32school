@@ -44,7 +44,7 @@ void setupNetworking() { // Used to connect to the wifi network and mqtt server
     }
 }
 
-void publishData(const char* topic, const char* data, const int dataLength) {
+void publishData(const char* topic, const char* data, const unsigned int dataLength) {
     if (!mqtt_client.connected()) // If not connected anymore, first try to reconnect before publishing
         connectMqttClient();
 

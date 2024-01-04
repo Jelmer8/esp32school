@@ -5,9 +5,9 @@
 using namespace std;
 
 // CONSTANTS
-constexpr unsigned int TRIG_PIN = 13;
-constexpr unsigned int ECHO_PIN = 12;
-constexpr unsigned int TRANSISTOR_PIN = 15;
+constexpr unsigned int TRIG_PIN = 33;
+constexpr unsigned int ECHO_PIN = 32;
+constexpr unsigned int TRANSISTOR_PIN = 25;
 constexpr unsigned int DISTANCE_DOOR = 10; // Distance from the sensor to the door when door is shut
 
 // VARIABLES
@@ -15,6 +15,8 @@ unsigned long previousMillis = 0;
 unsigned long interval = 500; // In milliseconds
 unsigned long buzzDelay = 2000; // Start buzzing after the door is opened for more than x milliseconds
 bool turnOffBuzzer = false; // True if the buzzer was on but now needs to be turned off
+unsigned long doorOpenTimeStamp = 0;
+bool doorCurrentlyOpen = false;
 
 
 void setupDoorFeature() {
@@ -22,6 +24,8 @@ void setupDoorFeature() {
     pinMode(ECHO_PIN, INPUT);
     pinMode(TRANSISTOR_PIN, OUTPUT);
 }
+
+//TODO: Resume from MQTT Values
 
 void doorFeatureLoop() {
     if (previousMillis + interval > millis())

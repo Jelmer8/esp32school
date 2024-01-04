@@ -6,7 +6,8 @@
 void setup() {
     Serial.begin(115200);
     setupNetworking();
-    publishData("jelmerdejong/test", "test123", 7);
+    setupDoorFeature();
+    //publishData("jelmerdejong/test", "test123", 7);
 }
 
 void loop() {

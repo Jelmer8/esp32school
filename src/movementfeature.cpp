@@ -20,6 +20,8 @@ void setupMovementFeature() {
     pinMode(RELAY_PIN, OUTPUT);
 }
 
+//TODO: COMMENTS EN MQTT!!
+
 void movementFeatureLoop() {
     const int pinStateCurrent = digitalRead(MOVEMENT_SENSOR_PIN);
 

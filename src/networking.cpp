@@ -2,9 +2,12 @@
 #include <PubSubClient.h>
 #include "secrets.h"
 
+// CONSTANTS
 
 const char* mqtt_client_name = "jelmerdejong";
 const char* subscriptions[] = {};
+
+// VARIABLES
 
 WiFiClient wifiClient; // Initialize the wifi client
 PubSubClient mqtt_client(wifiClient); // Initialize the mqtt client with the wifi client

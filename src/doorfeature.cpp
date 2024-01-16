@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "networking.h"
-#include "doorfeature.h"
 
 using namespace std;
 
@@ -9,14 +8,22 @@ constexpr unsigned int TRIG_PIN = 33;
 constexpr unsigned int ECHO_PIN = 32;
 constexpr unsigned int TRANSISTOR_PIN = 25;
 constexpr unsigned int DISTANCE_DOOR = 10; // Distance from the sensor to the door when door is shut
+constexpr unsigned long buzzDelay = 2000; // Start buzzing after the door is opened for more than x milliseconds
+constexpr int interval = 50; // In milliseconds
 
 // VARIABLES
-unsigned long previousMillis = 0;
-unsigned long interval = 500; // In milliseconds
-unsigned long buzzDelay = 2000; // Start buzzing after the door is opened for more than x milliseconds
+static unsigned long previousMillis = 0;
 bool turnOffBuzzer = false; // True if the buzzer was on but now needs to be turned off
 unsigned long doorOpenTimeStamp = 0;
 bool doorCurrentlyOpen = false;
+
+void resumeDoorTimestamp(unsigned long timestamp) {
+    doorOpenTimeStamp = timestamp;
+}
+
+void resumeDoorState(int state) {
+
+}
 
 
 void setupDoorFeature() {
@@ -24,8 +31,6 @@ void setupDoorFeature() {
     pinMode(ECHO_PIN, INPUT);
     pinMode(TRANSISTOR_PIN, OUTPUT);
 }
-
-//TODO: Resume from MQTT Values
 
 void doorFeatureLoop() {
     if (previousMillis + interval > millis())
@@ -38,7 +43,7 @@ void doorFeatureLoop() {
     digitalWrite(TRIG_PIN, LOW);
 
     const unsigned long duration = pulseIn(ECHO_PIN, HIGH); // Listen for ultrasonic pulse
-    const unsigned long distance = duration/29/2;
+    const unsigned long distance = duration/29/2; // Calcul
 
     if (duration == 0) {
         // Sensor did not receive pulse
@@ -50,8 +55,8 @@ void doorFeatureLoop() {
                 doorOpenTimeStamp = millis(); // Set timestamp to time when the open door was first discovered
                 doorCurrentlyOpen = true;
 
-                const char* timestamp = to_string(millis()).c_str(); // Convert timestamp to string
-                publishData("jelmerdejong/doorOpenTimestamp", timestamp, strlen(timestamp));
+                const char* timestamp = to_string(doorOpenTimeStamp).c_str(); // Convert timestamp to string
+                publishData("jelmerdejong/doorOpenTimestamp", timestamp, strlen(timestamp)); // +1 because null character is not counted
                     // Publish the data
                 publishData("jelmerdejong/doorCurrentlyOpen", "1", 1);
 

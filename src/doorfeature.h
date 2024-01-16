@@ -1,9 +1,8 @@
 #ifndef DOORFEATURE_H
 #define DOORFEATURE_H
 
-extern unsigned long doorOpenTimeStamp;
-extern bool doorCurrentlyOpen;
-
+void resumeDoorTimestamp(unsigned long timestamp);
+void resumeDoorState(int state);
 void setupDoorFeature();
 void doorFeatureLoop();
 

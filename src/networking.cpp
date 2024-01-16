@@ -1,11 +1,16 @@
-#include <WiFi.h>
-#include <PubSubClient.h>
+#include "doorfeature.h"
 #include "secrets.h"
+#include <PubSubClient.h>
+#include <WiFi.h>
+
+#include <movementfeature.h>
+
+using namespace std;
 
 // CONSTANTS
 
 const char* mqtt_client_name = "jelmerdejong";
-const char* subscriptions[] = {};
+const char* subscriptions[] = {"jelmerdejong/doorOpenTimestamp", "jelmerdejong/doorCurrentlyOpen", "jelmerdejong/lastMotionTimestamp"};
 
 // VARIABLES
 
@@ -23,8 +28,30 @@ void connectMqttClient() {
     Serial.println("Connected to the mqtt server");
 }
 
-void messageCallback(char* topic, byte* payload, unsigned int length) {
-    //TODO: Handle incoming messages to resume after reboot
+void messageCallback(const char* topic, const byte* payload, unsigned int length) { // Incoming message callback
+    Serial.println(topic);
+
+    char* newPayload = static_cast<char*>(malloc(length + 1)); // Allocate new char array
+    strncpy(newPayload, reinterpret_cast<const char*>(payload), length); // Copy payload into the new array
+    newPayload[length] = '\0'; // Needed because payload does not yet contain the null character
+
+
+    Serial.println(newPayload);
+
+
+    if (topic == "jelmerdejong/doorOpenTimestamp") {
+        resumeDoorTimestamp(stoi(newPayload));
+    }
+
+    if (topic == "jelmerdejong/doorCurrentlyOpen") {
+        resumeDoorState(stoi(newPayload));
+    }
+
+    if (topic == "jelmerdejong/lastMotionTimestamp") {
+        resumeMotionTimestamp(stoi(newPayload));
+    }
+
+    free(newPayload); // Free allocated memory
 };
 
 void setupNetworking() { // Used to connect to the wifi network and mqtt server
@@ -52,7 +79,7 @@ void publishData(const char* topic, const char* data, const unsigned int dataLen
         connectMqttClient();
 
     mqtt_client.beginPublish(topic, dataLength, true); // Begin publishing
-    mqtt_client.write(reinterpret_cast<const uint8_t *>(data), dataLength); // reinterpret_cast voor const char* naar const byte*
+    mqtt_client.print(data); // Send this data
     mqtt_client.endPublish(); // Send the message
 }
 

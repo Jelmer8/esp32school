@@ -1,7 +1,7 @@
 #ifndef DOORFEATURE_H
 #define DOORFEATURE_H
 
-void resumeDoorTimestamp(unsigned long timestamp);
+void resumeDoorMsAgo(unsigned long msAgo);
 void resumeDoorState(int state);
 void setupDoorFeature();
 void doorFeatureLoop();

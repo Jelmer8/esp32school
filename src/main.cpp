@@ -8,7 +8,6 @@ void setup() { // Run setup function of all features
     setupNetworking();
     setupDoorFeature();
     setupMovementFeature();
-    //publishData("jelmerdejong/test", "test123", 7);
 }
 
 void loop() { // Run loop function of all features

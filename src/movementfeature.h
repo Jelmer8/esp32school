@@ -1,7 +1,7 @@
 #ifndef MOVEMENTFEATURE_H
 #define MOVEMENTFEATURE_H
 
-void resumeMotionTimestamp(unsigned long timestamp);
+void resumeMotionMsAgo(unsigned long msAgo);
 void setupMovementFeature();
 void movementFeatureLoop();
 

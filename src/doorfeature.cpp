@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "networking.h"
-#include "doorfeature.h"
 
 using namespace std;
 
@@ -9,14 +8,39 @@ constexpr unsigned int TRIG_PIN = 33;
 constexpr unsigned int ECHO_PIN = 32;
 constexpr unsigned int TRANSISTOR_PIN = 25;
 constexpr unsigned int DISTANCE_DOOR = 10; // Distance from the sensor to the door when door is shut
+constexpr long BUZZ_DELAY = 2000; // Start buzzing after the door is opened for more than x milliseconds
+constexpr int INTERVAL = 50; // In milliseconds
 
 // VARIABLES
-unsigned long previousMillis = 0;
-unsigned long interval = 500; // In milliseconds
-unsigned long buzzDelay = 2000; // Start buzzing after the door is opened for more than x milliseconds
+static unsigned long previousMillis = 0;
 bool turnOffBuzzer = false; // True if the buzzer was on but now needs to be turned off
-unsigned long doorOpenTimeStamp = 0;
+long doorOpenTimeStamp = 0;
 bool doorCurrentlyOpen = false;
+static bool started = false;
+
+void resumeDoorMsAgo(const unsigned long msAgo) {
+    if (started) { // There's no need to resume anymore
+        return;
+    }
+
+    doorOpenTimeStamp = -msAgo;
+    if (msAgo > BUZZ_DELAY && doorCurrentlyOpen) {
+        digitalWrite(TRANSISTOR_PIN, HIGH);
+        turnOffBuzzer = true;
+    } // Else is not needed, buzzer does not turn on when ESP turns on
+}
+
+void resumeDoorState(const int state) {
+    if (started) { // There's no need to resume anymore
+        return;
+    }
+
+    doorCurrentlyOpen = state;
+    if (doorCurrentlyOpen && doorOpenTimeStamp + BUZZ_DELAY < static_cast<long>(millis())) {
+        digitalWrite(TRANSISTOR_PIN, HIGH);
+        turnOffBuzzer = true;
+    } // Else is not needed, buzzer does not turn on when ESP turns on
+}
 
 
 void setupDoorFeature() {
@@ -25,11 +49,9 @@ void setupDoorFeature() {
     pinMode(TRANSISTOR_PIN, OUTPUT);
 }
 
-//TODO: Resume from MQTT Values
-
 void doorFeatureLoop() {
-    if (previousMillis + interval > millis())
-        return; // If less time than 'interval' has passed, return to ensure we dont run too often
+    if (previousMillis + INTERVAL > millis())
+        return; // If less time than 'INTERVAL' has passed, return to ensure we dont run too often
 
     digitalWrite(TRIG_PIN, LOW); // Send out an ultrasonic pulse
     delayMicroseconds(2);
@@ -38,7 +60,7 @@ void doorFeatureLoop() {
     digitalWrite(TRIG_PIN, LOW);
 
     const unsigned long duration = pulseIn(ECHO_PIN, HIGH); // Listen for ultrasonic pulse
-    const unsigned long distance = duration/29/2;
+    const unsigned long distance = duration/29/2; // Calcul
 
     if (duration == 0) {
         // Sensor did not receive pulse
@@ -50,21 +72,28 @@ void doorFeatureLoop() {
                 doorOpenTimeStamp = millis(); // Set timestamp to time when the open door was first discovered
                 doorCurrentlyOpen = true;
 
-                const char* timestamp = to_string(millis()).c_str(); // Convert timestamp to string
-                publishData("jelmerdejong/doorOpenTimestamp", timestamp, strlen(timestamp));
+                publishData("jelmerdejong/doorOpenMsAgo", "0", 1);
                     // Publish the data
                 publishData("jelmerdejong/doorCurrentlyOpen", "1", 1);
 
                 return; // Return, we dont need to check if door has been open long enough, it hasn't
             }
 
-            if (doorOpenTimeStamp + buzzDelay < millis() && doorCurrentlyOpen) {
-                // Door has been opened for more than buzzDelay milliseconds, turn on the buzzer
+            if (doorOpenTimeStamp + BUZZ_DELAY < millis() && doorCurrentlyOpen) {
+                // Door has been opened for more than BUZZ_DELAY milliseconds, turn on the buzzer
                 digitalWrite(TRANSISTOR_PIN, HIGH);
                 turnOffBuzzer = true;
+
+                const unsigned long msAgo = millis()-doorOpenTimeStamp; // Calculate how long the door has been open for
+                const char* msAgoStr = to_string(msAgo).c_str(); // Convert number to text
+
+                publishData("jelmerdejong/doorOpenMsAgo", msAgoStr, strlen(msAgoStr));
+
             }
         } else { // Door is definitely shut
             doorCurrentlyOpen = false;
+
+            started = true;
 
             if (turnOffBuzzer) { // If buzzer is still on, turn it off
                 digitalWrite(TRANSISTOR_PIN, LOW);
